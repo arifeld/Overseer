@@ -1,0 +1,58 @@
+{
+  "guild": {
+    "modMailIndex": 3,
+    "modMailChannelsID": {},
+    "modMailChannels": {},
+    "modMailCollectors": {},
+    "modMailBanList": [],
+    "modLog": {
+      "481712720182378506": [
+        {
+          "case": 3,
+          "action": "kick",
+          "reason": "yeetus",
+          "mod": "139279634796773376",
+          "timestamp": 1572155915827
+        },
+        {
+          "case": 4,
+          "action": "kick",
+          "reason": "go die plz",
+          "mod": "139279634796773376",
+          "timestamp": 1572156000983
+        },
+        {
+          "case": 5,
+          "action": "kick",
+          "reason": "works thanks",
+          "mod": "139279634796773376",
+          "timestamp": 1572156065580
+        },
+        {
+          "case": 6,
+          "action": "kick",
+          "reason": "embed test",
+          "mod": "139279634796773376",
+          "timestamp": 1572156497139
+        }
+      ]
+    },
+    "banTimers": {},
+    "caseNumber": 6,
+    "scoreTable": {
+      "526593001686958081": -7
+    },
+    "seenIDTable": [
+      "481712720182378506",
+      "481712720182378506",
+      "481712720182378506",
+      "481712720182378506",
+      "481712720182378506",
+      "481712720182378506",
+      "282281483450843141",
+      "481712720182378506",
+      "481712720182378506",
+      "413471944722350081"
+    ]
+  }
+}
