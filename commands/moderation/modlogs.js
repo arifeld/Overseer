@@ -96,8 +96,37 @@ module.exports = class ModLog extends Command {
             .setTitle("**Mod Logs for " + username + ":**")
             .setColor(0x800080)
             .setAuthor(username, avatarURL)
-        for (var i = 0; i < Math.min(userLogs.length, 20); i++){ // need to use this for loop to make sure we are in order:
+
+				const infoEmbed1 = new RichEmbed()
+					.setColor(0x800080)
+
+				const infoEmbed2 = new RichEmbed()
+					.setColor(0x800080)
+
+				const infoEmbed3 = new RichEmbed()
+					.setColor(0x800080)
+
+				// A few sketchy things so that we can display more than 20 results.
+				let lastSent = false
+        for (var i = 0; i < userLogs.length; i++){ // need to use this for loop to make sure we are in order:
+						lastSent = false
             let logObj = userLogs[i]
+
+						// Check which embed we want to add to.
+						var currentEmbed
+						if (i < 20){
+							currentEmbed = infoEmbed
+						}
+						if ( i >= 20 && i < 40){
+							currentEmbed = infoEmbed1
+						}
+						if (i >= 40 && i < 60){
+							currentEmbed = infoEmbed2
+						}
+						if (i >= 60 && i < 80){
+							currentEmbed = infoEmbed3
+						}
+
 
             // Now, figure out what we want to do according to the type of log.
             // Case 1: BAN
@@ -125,7 +154,7 @@ module.exports = class ModLog extends Command {
                 embedContent += ("\n**Moderator:** " + msg.guild.members.get(logObj.mod))
 
                 // Add the info to the embed.
-                infoEmbed.addField(embedHeader, embedContent)
+                currentEmbed.addField(embedHeader, embedContent)
             }
 
             // Case 2, UNBAN
@@ -136,7 +165,7 @@ module.exports = class ModLog extends Command {
                 embedContent += ("\n**Moderator:** " + msg.guild.members.get(logObj.mod))
 
                 // Add the info to the embed.
-                infoEmbed.addField("**Case " + logObj.case + ": Unban**", embedContent)
+                currentEmbed.addField("**Case " + logObj.case + ": Unban**", embedContent)
             }
 
             // Case 3, KICK
@@ -146,7 +175,7 @@ module.exports = class ModLog extends Command {
                 embedContent += ("\n**Kick Date**: " + (new Date(logObj.timestamp)).toUTCString())
                 embedContent += ("\n**Moderator:** " + msg.guild.members.get(logObj.mod))
 
-                infoEmbed.addField("**Case " + logObj.case + ": Kick**", embedContent)
+                currentEmbed.addField("**Case " + logObj.case + ": Kick**", embedContent)
             }
 
             // Case 4, WARN
@@ -166,11 +195,19 @@ module.exports = class ModLog extends Command {
                 embedContent += ("**\nWarn Date:** " + (new Date(logObj.timestamp)).toUTCString())
                 embedContent += ("**\nModerator:** " + msg.guild.members.get(logObj.mod))
 
-                infoEmbed.addField(embedHeader, embedContent)
+                currentEmbed.addField(embedHeader, embedContent)
             }
 
+
+						// See if we need to send it.
+						if (i == 20 || i == 40 || i = 60){
+							lastSent = true
+							msg.embed(currentEmbed)
+						}
         }
-        msg.embed(infoEmbed)
+				if (!lastSent){
+					msg.embed(currentEmbed)
+				}
 
 
 	}
