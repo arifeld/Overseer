@@ -1,6 +1,8 @@
 
 const fs = require("fs")
 const path = require("path")
+const {RichEmbed} = require("discord.js")
+
 module.exports = {
 
     // getServerInfo(msg)
@@ -30,4 +32,99 @@ module.exports = {
             }
         })
     },
+
+    // Argument types for custom argument handling
+    memberArg: {
+        key: "member",
+        prompt: "please enter a valid member.",
+        type: "member",
+    },
+
+    userArg: {
+        key: "user",
+        prompt: "please enter a valid user.",
+        type: "user"
+    },
+
+    integerArg: {
+        key: "integer",
+        prompt: "please enter a valid integer.",
+        type: "integer"
+    },
+
+    // Helper functions for arguments.
+    parseInteger(client, val, msg){
+            return client.registry.types.get("integer").parse(val, msg, this.integerArg)
+    },
+
+    isInteger(client, val, msg){ // really more like "canBeInteger", as opposed to "isInteger"
+        return client.registry.types.get("integer").validate(val, msg, this.integerArg)
+    },
+
+    parseUser(client, val, msg){
+        return client.registry.types.get("user").parse(val, msg, this.userArg)
+    },
+
+    isUser(client, val, msg){
+        return client.registry.types.get("user").validate(val, msg, this.userArg)
+    },
+
+    parseMember(client, val, msg){
+        return client.registry.types.get("member").parse(val, msg, this.memberArg)
+    },
+
+    isMember(client, val, msg){
+        return client.registry.types.get("member").validate(val, msg, this.memberArg)
+    },
+
+    argError(msg, commandFormat){
+      const argEmbed = new RichEmbed()
+          .setColor(0x8B0000)
+          .setAuthor(msg.member.displayName, msg.author.avatarURL)
+          .setTitle("Invalid Arguments Provided")
+          .setDescription("Command Usage: `" + msg.command.client.commandPrefix + msg.command.name + " " + commandFormat + "`")
+          .setFooter("Please re-enter the command.")
+          .setTimestamp(new Date())
+        return argEmbed
+    },
+
+    async verifyUser(client, val, msg){
+      let user = undefined
+      if (await this.isUser(client, val, msg) == true){
+        user = await this.parseUser(client, val, msg)
+      }
+      if (user == undefined){
+        const argEmbed = new RichEmbed()
+          .setColor(0x8B0000)
+          .setAuthor(msg.member.displayName, msg.author.avatarURL)
+          .setTitle("Invalid Arguments Provided")
+          .setDescription("You entered an invalid user!\n\nCommand Usage: `" + msg.command.client.commandPrefix + msg.command.name + " " + msg.command.format + "`")
+          .setFooter("Please re-enter the command.")
+          .setTimestamp(new Date())
+        msg.embed(argEmbed)
+      }
+
+      return user
+    },
+
+    async verifyMember(client, val, msg){
+      let member = undefined
+      if (await this.isMember(client, val, msg) == true){
+        member = await this.parseMember(client, val, msg)
+      }
+      if (member == undefined){
+        const argEmbed = new RichEmbed()
+          .setColor(0x8B0000)
+          .setAuthor(msg.member.displayName, msg.author.avatarURL)
+          .setTitle("Invalid Arguments Provided")
+          .setDescription("You entered an invalid member!\n\nCommand Usage: `" + msg.command.client.commandPrefix + msg.command.name + " " + msg.command.format + "`")
+          .setFooter("Please re-enter the command.")
+          .setTimestamp(new Date())
+        msg.embed(argEmbed)
+      }
+
+      return member
+    }
+
+
 }

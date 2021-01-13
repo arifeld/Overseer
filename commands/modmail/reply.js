@@ -51,7 +51,11 @@ module.exports = class ModMainReply extends Command {
 		// Send the message.
 		// See if an embed as opposed to an actual message is worthwhile.
 		// For now we will just use a message, because it probably looks better.
-		let sendMessage = "**[Staff]:** " + message
+        const sendEmbed = new RichEmbed()
+            .setColor(0xCC6699)
+            .setAuthor("New message from the Teamagers staff:")
+            .setDescription(message)
+            .setTimestamp( new Date() )
 
 		let messageOptions = {}
         if (msg.attachments.size !== 0){ // check if we have attachments, if so add them.
@@ -61,11 +65,15 @@ module.exports = class ModMainReply extends Command {
             })
             messageOptions.files = attachments
         }
+        messageOptions.embed = sendEmbed
 		// Send the message
-        console.log(modMailChannels)
-        console.log(modMailChannels[msg.channel.id])
-		msg.guild.members.get(modMailChannels[msg.channel.id]).user.send(sendMessage, messageOptions)
-
+		this.client.guilds.get("585994345086451723").fetchMember(modMailChannels[msg.channel.id])
+			.then( guildMember => {
+				guildMember.send(messageOptions)
+					.then( _msg => {
+						msg.react("✅")
+					})
+			})
 
 	}
 }

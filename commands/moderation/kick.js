@@ -6,6 +6,8 @@ const path = require("path")
 // Custom modules.
 const base    = require(path.join(__dirname, "../../custom_modules/base.js"))
 const modBase = require(path.join(__dirname, "../../custom_modules/modBase.js"))
+const botConfig = require(path.join(__dirname, "../../settings/botConfig.json"))
+
 
 module.exports = class KickUser extends Command {
 	constructor(client) {
@@ -14,25 +16,48 @@ module.exports = class KickUser extends Command {
 			group: "moderation",
 			memberName: "kick",
 			description: "Kicks the user with a specified user.",
-	  guildOnly: true,
-	  args: [
-		{
-			key: "user",
-			prompt: "which user would you look to kick?",
-			type: "member"
-		},
-		{
-			key: "reason",
-			prompt: "what is the kick reason?",
-			type: "string"
-		}
-	  ]
-		})
+      guildOnly: true,
+			format: "<user> [reason]",
+			argsType: "multiple",
+			argsCount: 2
+			/*
+      args: [
+          {
+      		key: "user",
+      		prompt: "which user would you look to kick?",
+      		type: "member"
+      	},
+      	{
+      		key: "reason",
+      		prompt: "what is the kick reason?",
+      		type: "string"
+      	}
+			]*/
+  })
 	}
 
 
 	async run(msg, args){
-		const {user, reason} = args;
+
+		let user = null
+		let reason = "None given"
+
+		if (args.length == 1){
+			user = args[0]
+		}
+		else if (args.length == 2){
+			user = args[0]
+			reason = args[1]
+		}
+		else{
+			return msg.embed(base.argError(msg, msg.command.format))
+		}
+
+		//const {user, reason} = args;
+
+		// now we need to verify things.
+		user = await base.verifyMember(this.client, user, msg) // this sends the error message for us
+		if (user == undefined){ return }
 
 		// Manually handle user permissions, because commando has terrible formatting.
 		if (!msg.member.hasPermission("KICK_MEMBERS")){
@@ -118,7 +143,7 @@ module.exports = class KickUser extends Command {
 			.setColor(0xFF0000)
 			.setFooter("Case Number: " + caseNumber)
 			.addField("Kick Reason: ", reason)
-			.addField("Moderator: ", (msg.member.nickname || msg.member.user.username))
+			//.addField("Moderator: ", (msg.member.nickname || msg.member.user.username))
 
 		await user.createDM()
 		.then( channel => {
@@ -140,6 +165,13 @@ module.exports = class KickUser extends Command {
 		  .addField("Kick Reason:", reason)
 
 		msg.channel.send(embed)
+            .then(embedMsg => {
+                const logEmbed = new RichEmbed()
+                .setColor(0xFF0000)
+                .addField("**New Mod Action:**", msg.member + " kicked " + (user || user.user.username) + " for " + "`" + reason + "`")
+                .addField("Command:", "[View Message](" + embedMsg.url + ")")
+                msg.guild.channels.get(botConfig.modLogChannel).send({embed: logEmbed})
+            })
 
 		base.saveServerInfo(msg, serverInfo)
 	}

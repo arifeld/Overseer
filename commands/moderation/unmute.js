@@ -9,23 +9,23 @@ const modBase = require(path.join(__dirname, "../../custom_modules/modBase.js"))
 const botConfig = require(path.join(__dirname, "../../settings/botConfig.json"))
 
 
-module.exports = class UnBan extends Command {
+module.exports = class UnMute extends Command {
 	constructor(client) {
 		super(client, {
-			name: "unban",
+			name: "unmute",
 			group: "moderation",
-			memberName: "unban",
-			description: "Unbans the user.",
+			memberName: "unmute",
+			description: "Unmutes the user.",
 			guildOnly: true,
       args: [
           {
-            key: "userid",
-            prompt: "which user would you like to unban (you must give a userID)?",
-            type: "string"
+            key: "user",
+            prompt: "which user would you like to unmute?",
+            type: "member"
         },
         {
             key: "reason",
-            prompt: "what is the unban reason? (Optional)",
+            prompt: "what is the unmute reason? (Optional)",
             type: "string",
             default: ""
         }
@@ -35,40 +35,33 @@ module.exports = class UnBan extends Command {
 
 
 	async run(msg, args){
-    const {userid, reason} = args;
+    const {user, reason} = args;
 
     // Manually handle user permissions, because commando has terrible formatting.
-    if (!msg.member.hasPermission("BAN_MEMBERS")){
+    if (!msg.member.hasPermission("KICK_MEMBERS")){
         const errorEmbed = new RichEmbed()
             .setTitle("**You do not have permission to use this command!**")
-            .setDescription("This command requires the 'Ban Members' permission.")
+            .setDescription("This command requires the 'Kick Members' permission.")
             .setAuthor((msg.member.nickname || msg.member.user.username), msg.member.user.avatarURL)
             .setColor(0xFF0000)
         return msg.embed(errorEmbed)
     }
 
-    // Check if the user is trying to ban themselves.
-    if (msg.guild.members.has(userid) && (msg.member == msg.guild.members.get(userid))){
+    // Check if the user is trying to mute themselves.
+    if (msg.guild.members.has(user.id) && (msg.member == msg.guild.members.get(user.id))){
         const errorEmbed = new RichEmbed()
-			.setTitle("**You cannot unban yourself!**")
+			.setTitle("**You cannot unmute yourself!**")
             .setDescription("Why are you trying to, anyway?")
             .setAuthor((msg.member.nickname || msg.member.user.username), msg.member.user.avatarURL)
 			.setColor(0xFF0000)
 		return msg.embed(errorEmbed)
     }
 
-    // Check if the user is actually banned.
-    let userBanned = false
-    await msg.guild.fetchBans()
-        .then( banList => {
-            if (banList.has(userid)){
-                userBanned = true
-            }
-        })
 
-    if (!userBanned){ // they're not banned, error out.
+
+    if (!user.roles.has(botConfig.muteRole)){ // they're not muted, error out.
         const errorEmbed = new RichEmbed()
-			.setTitle("**That user is not banned!**")
+			.setTitle("**That user is not muted!**")
             .setAuthor((msg.member.nickname || msg.member.user.username), msg.member.user.avatarURL)
 			.setColor(0xFF0000)
 		return msg.embed(errorEmbed)
@@ -78,36 +71,36 @@ module.exports = class UnBan extends Command {
     serverInfo.caseNumber = (serverInfo.caseNumber + 1)
     let caseNumber = serverInfo.caseNumber
 	let modLog     = serverInfo.modLog    || {}
-	let banTimers  = serverInfo.banTimers || {}
+	let muteTimers  = serverInfo.muteTimers || {}
 
 
     let dateVal = new Date()
-	let unbanTimestamp = dateVal.getTime()
+	let unmuteTimestamp = dateVal.getTime()
 
-    if (userid in modLog){
-        let userInfo = modLog[userid]
-        // Because they're banned, we can assume that the most recent ban has not expired. Thus the most recent ban needs to be edited.
-        // If it can't find the object, it shouldn't really matter, this should only occur for people who were banned before the bot joined.
+    if (user.id in modLog){
+        let userInfo = modLog[user.id]
+        // Because they're mutened, we can assume that the most recent mute has not expired. Thus the most recent mute needs to be edited.
+        // If it can't find the object, it shouldn't really matter, this should only occur for people who were mutened before the bot joined.
         for (let i = userInfo.length - 1 ; i >= 0; i--){
-            if (userInfo[i].action == "ban"){ // This must be the most recent ban.
-                // Set it to "unbanned".
-                userInfo[i].unbanned = true
+            if (userInfo[i].action == "mute"){ // This must be the most recent mute.
+                // Set it to "unmuted".
+                userInfo[i].unmuted = true
                 break
             }
         }
     }
 
 
-	// Add the unban to the mod log.
+	// Add the unmute to the mod log.
 	// If they already have had a mod action against them.
-	if (userid in modLog){
-		let userLogs = modLog[userid]
+	if (user.id in modLog){
+		let userLogs = modLog[user.id]
 		let logObject = {
 			case: caseNumber,
-			action: "unban",
+			action: "unmute",
             reason: (reason == "" ? "None given" : reason),
 			mod: msg.member.id,
-			timestamp: unbanTimestamp
+			timestamp: unmuteTimestamp
 		}
 		userLogs.push(logObject)
 
@@ -117,22 +110,22 @@ module.exports = class UnBan extends Command {
 	else {
 		let logObject = {
 			case: caseNumber,
-			action: "unban",
+			action: "unmute",
             reason: (reason == "" ? "None given" : reason),
 			mod: msg.member.id,
-			timestamp: unbanTimestamp
+			timestamp: unmuteTimestamp
 		}
-		modLog[userid] = [logObject]
+		modLog[user.id] = [logObject]
 	}
 
     // We need to get information about the user, which we might not have.
-    this.client.fetchUser(userid)
+    this.client.fetchUser(user.id)
         .then( user => {
             const embed = new RichEmbed()
               .setColor(0x00FF00)
-              .setAuthor("Member Unbanned", user.avatarURL)
+              .setAuthor("Member Unmuted", user.avatarURL)
               .setFooter("Case Number: " + caseNumber)
-              .setTimestamp(unbanTimestamp)
+              .setTimestamp(unmuteTimestamp)
               .addField("**User:**", user, true)
               .addField("**Reason:**", reason == "" ? "None given" : reason, true)
               .addField("**Moderator:**", msg.member, true)
@@ -140,50 +133,54 @@ module.exports = class UnBan extends Command {
                 .then(embedMsg => {
                     const logEmbed = new RichEmbed()
                     .setColor(0x00FF00)
-                    .addField("**New Mod Action:**", msg.member + " unbanned " + (user || user.user.username) + (reason !== "" ? " for " + "`" + reason + "`" : ""))
+                    .addField("**New Mod Action:**", msg.member + " unmuted " + (user || user.user.username) + (reason !== "" ? " for " + "`" + reason + "`" : ""))
                     .addField("Command:", "[View Message](" + embedMsg.url + ")")
-                    .setTimestamp(unbanTimestamp)
+                    .setTimestamp(unmuteTimestamp)
                     .setFooter("Case Number: " + caseNumber)
                     msg.guild.channels.get(botConfig.modLogChannel).send({embed: logEmbed})
                 })
 
-            // Send a message to the user, detailing that they have been unbanned.
+            // Send a message to the user, detailing that they have been unmuted.
             user.createDM()
             .then( dmChannel => {
-                const unbanEmbed = new RichEmbed()
-                    .setTitle("**You have been unbanned from " + msg.guild.name + ".**")
-                    .setDescription("Please read the rules once you rejoin.")
+                const unmuteEmbed = new RichEmbed()
+                    .setTitle("**You have been unmuted from " + msg.guild.name + ".**")
+                    .setDescription("Please read the rules to ensure you do not get muted again.")
                     .setFooter("Case Number: " + caseNumber)
                     .setTimestamp(new Date())
                     .setColor(0x00FF00)
 
-                dmChannel.send({embed: unbanEmbed})
+                dmChannel.send({embed: unmuteEmbed})
                 .catch(err => {
                     // we can't actually send the message to the user, because they aren't on the server, notify the staff.
                     const errorEmbed = new RichEmbed()
-                        .addField("**Unable to send DM to user notifying them of the unban.**", "You will have to manually let the user know that they have been unbanned.")
+                        .addField("**Unable to send DM to user notifying them of the unmute.**", "This shouldn't happen - you should probably contact @Feldma#1776.")
                         .setColor(0xFF0000)
                     msg.embed(errorEmbed)
                 })
             })
         })
 
+    // Delete the mute timer.
+    if (user.id in muteTimers){
+        delete muteTimers[user.id]
+    }
 
-
-    // Delete the timer, if it exists.
-    if (userid in banTimers){
-        delete banTimers[userid]
+    // Remove the user from the mute persist.
+    for (let i=0; i < serverInfo.mutePersist; i++){
+        if (serverInfo.mutePersist[i] == userid){
+            serverInfo.mutePersist.splice(i, 1)
+        }
     }
 
 
-	// Actually unban the user on the server.
-	msg.guild.unban(userid, {
-		reason: "(CASE " + caseNumber + "): " + reason + " - " + (msg.member.nickname || msg.member.user.username)
-	})
-	.then(console.log("User: " + userid + " unbanned."))
-
-
-
+	// Remove the mute role.
+	user.removeRole(botConfig.muteRole, "(CASE " + caseNumber + ") - " + reason + " - " + (msg.member.nickname || msg.member.user.username))
+    msg.guild.channels.forEach( (value, key) => {
+        if (value.permissionOverwrites.has(user.id)){
+            value.permissionOverwrites.get(user.id).delete()
+        }
+    })
 
     base.saveServerInfo(msg, serverInfo)
 	 }

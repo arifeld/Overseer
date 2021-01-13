@@ -11,7 +11,7 @@ module.exports = class StartModMail extends Command {
 			name: "modmail",
 			group: "modmail",
 			memberName: "modmail",
-			description: "Starts an anonymous modmail with the Teamagers staff. Please do not abuse this system or you will be banned from the feature.",
+			description: "Starts an anonymous modmail with the teamagers staff. Please do not abuse this system or you will be banned from the feature.",
 			args: [
         {
           key: "title",
@@ -40,7 +40,7 @@ module.exports = class StartModMail extends Command {
 			return
 		}
 		// We can't use getServerInfo from a DM, so:
-		var fileLocation = path.join(__dirname, "../../servers/", "571462276930863117" + ".JSON")
+		var fileLocation = path.join(__dirname, "../../servers/", "670371258516504578" + ".JSON")
 		if (!fs.existsSync(fileLocation)){
 				fs.writeFileSync( fileLocation, '{"guild": {}}', {encoding: "utf8", flag: "wx" } ) // create the file if it doesn't already exist and write some JSON to it to stop errors.
 		}
@@ -79,9 +79,9 @@ module.exports = class StartModMail extends Command {
     		modMailIndex = modMailIndex + 1
 
     		// Create a new channel in Teamagers.
-    		await this.client.guilds.get("571462276930863117").createChannel("modmail-" + modMailIndex, {
+    		await this.client.guilds.get("670371258516504578").createChannel("mail-" + modMailIndex, {
     			type: "text",
-    			parent: this.client.guilds.get("571462276930863117").channels.get("636725786380075008")
+    			parent: this.client.guilds.get("670371258516504578").channels.get("690513932082872423")
     		})
     		.then(channel => {
     			// Log the channel by userID, and then send an initial embed.
@@ -93,7 +93,7 @@ module.exports = class StartModMail extends Command {
     				.addField("Title:", (title == "" ? "No title specified." : title))
     				.setTimestamp(new Date())
                     .setColor(0x00FF00)
-    			channel.send({embed: newTicketEmbed})
+    			channel.send("@here", {embed: newTicketEmbed})
 
                 // Let the user know the modmail has started.
                 const informUserEmbed = new RichEmbed()
@@ -116,8 +116,12 @@ module.exports = class StartModMail extends Command {
     				else{
         				// Send the message.
         				// See if an embed as opposed to an actual message is worthwhile.
-        				// For now we will just use a message, because it probably looks better.
-        				let message = "**[User " + modMailIndex + "]:** " + m.content
+        				const messageEmbed = new RichEmbed()
+                            .setColor(0xCC6699)
+                            .setAuthor("New message from user:")
+                            .setTimestamp(new Date())
+                            .setDescription(m.content)
+
 
         				let messageOptions = {}
                         if (m.attachments.size !== 0){ // check if we have attachments, if so add them.
@@ -127,14 +131,18 @@ module.exports = class StartModMail extends Command {
                             })
                             messageOptions.files = attachments
                         }
-        				channel.send(message, messageOptions)
+                        messageOptions.embed = messageEmbed
+        				channel.send(messageOptions)
+                            .then(_msg => {
+                                m.react("✅")
+                            })
                     }
     			})
     		})
 
             serverInfo.modMailIndex = modMailIndex // maybe this will work?
 
-    		var fileLocation = path.join(__dirname, "../../servers/", "571462276930863117" + ".JSON")
+    		var fileLocation = path.join(__dirname, "../../servers/", "670371258516504578" + ".JSON")
 
     		fs.writeFile(fileLocation, JSON.stringify({"guild": serverInfo}, null, 2), (err) => {
     				if (err){

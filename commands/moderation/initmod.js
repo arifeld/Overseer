@@ -5,7 +5,7 @@ const path = require('path')
 
 const base    = require(path.join(__dirname, "../../custom_modules/base.js"))
 
-module.exports = class InitMail extends Command {
+module.exports = class InitMod extends Command {
 	constructor(client) {
 		super(client, {
 			name: "initmod",
@@ -25,6 +25,8 @@ module.exports = class InitMail extends Command {
         serverInfo.caseNumber = 0
         serverInfo.modLog = {}
         serverInfo.banTimers = {}
+        serverInfo.muteTimers = {}
+        serverInfo.mutePersist = []
 
         msg.say("Done!")
 		base.saveServerInfo(msg, serverInfo)
